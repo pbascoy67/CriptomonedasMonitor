@@ -7,7 +7,7 @@
   <style>
     /* === Botón Cerrar Sesión === */
     .boton-cerrar-sesion {
-      position: absolute;
+      position: fixed;
       left: 10px;
       top: 10px;
       padding: 8px 16px;
@@ -17,6 +17,7 @@
       border-radius: 4px;
       cursor: pointer;
       z-index: 5000; /* para que quede por encima del resto */
+      transition: background-color 0.3s;
     }
     .boton-cerrar-sesion:hover {
       background-color: #d32f2f;
@@ -563,7 +564,7 @@
 </head>
 <body class="dark">
   <!-- Botón para cerrar sesión -->
-  <button class="boton-cerrar-sesion" onclick="window.location.href='index.html'">
+  <button class="boton-cerrar-sesion" onclick="logout()">
     Cerrar sesión
   </button>
 
@@ -753,6 +754,15 @@
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     const progressMessage = document.getElementById('progressMessage');
+
+    // === 0) Función para cerrar sesión ===
+    function logout() {
+      // Limpiar datos de sesión
+      localStorage.clear();
+      // Opcional: puedes limpiar variables globales si es necesario
+      // Redirigir a la página de inicio de sesión
+      window.location.href = 'index.html';
+    }
 
     // === 1) Manejo de tema (dark/light) ===
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1619,6 +1629,7 @@
 
     // === 26) Carga Inicial ===
     initialize();
+
   </script>
 </body>
 </html>
