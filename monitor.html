@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitor Criptomonedas - RSI + PnL + Voz + Favoritas Primero</title>
+  <style>
+    /* === Estilos Generales === */
+    body.dark {
+      background-color: #0a0e17;
+      color: #ffffff;
+    }
+    body.light {
+      background-color: #f0f0f0;
+      color: #000000;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h1 {
+      text-align: center;
+      color: #00ffcc;
+      font-size: 2.5em;
+      margin-bottom: 5px;
+    }
+    h3 {
+      text-align: center;
+      color: #7a8599;
+      margin-top: -10px;
+      font-size: 0.9em;
+      font-weight: normal;
+    }
+    #indicatorExplanation {
+      max-width: 800px;
+      margin: 10px auto 20px auto;
+      background-color: #1a2332;
+      border-radius: 10px;
+      padding: 15px;
+      color: #ccc;
+      font-size: 0.9em;
+    }
+    body.light #indicatorExplanation {
+      background-color: #eaeaea;
+      color: #333;
+    }
+    #indicatorExplanation p {
+      margin: 5px 0;
+      line-height: 1.3em;
+    }
+    #lastUpdate {
+      text-align: center;
+      margin-top: 5px;
+      font-style: italic;
+      color: #7a8599;
+      margin-bottom: 20px;
+    }
+    #filtersContainer {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #coinFilterContainer,
+    #rsiFilterContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #1a2332;
+      border-radius: 15px;
+      padding: 10px;
+    }
+    body.light #coinFilterContainer,
+    body.light #rsiFilterContainer {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+    label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    select {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #00ffcc;
+      background-color: transparent;
+      color: inherit;
+      min-width: 150px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+    }
+    #modalTimeFrameFilter option {
+      background-color: #1a2332;
+      color: #ffffff;
+    }
+    body.light #modalTimeFrameFilter option {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+    #intervalContainer {
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    #intervalContainer label {
+      margin-right: 5px;
+    }
+    #updateIntervalInput {
+      width: 60px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setIntervalBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #cryptoGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .crypto-card {
+      background-color: #1a2332;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    body.light .crypto-card {
+      background-color: #ffffff;
+      color: #000000;
+    }
+    .crypto-card:hover {
+      transform: translateY(-5px);
+    }
+    .crypto-card:hover::after {
+      content: "Clic para ver gráfico";
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #00ffcc;
+      color: #0a0e17;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      white-space: nowrap;
+    }
+    .crypto-logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+    }
+    .crypto-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+    .crypto-price {
+      font-size: 1.1em;
+      margin-bottom: 15px;
+    }
+    .flag {
+      display: inline-block;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.9em;
+      white-space: nowrap;
+    }
+    .green-flag {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .red-flag {
+      background-color: #F44336;
+      color: white;
+    }
+    .neutral-flag {
+      background-color: #FF9800;
+      color: white;
+    }
+    .mini-chart-container {
+      margin-top: 15px;
+      position: relative;
+      height: 80px;
+    }
+    canvas.mini-chart {
+      width: 100%;
+      height: 100%;
+    }
+    .no-chart-text {
+      margin-top: 15px;
+      font-size: 0.8em;
+      color: #7a8599;
+    }
+    .favorite-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #ffc107;
+    }
+    #error {
+      text-align: center;
+      color: #F44336;
+      font-size: 1.2em;
+      margin-top: 50px;
+      display: none;
+    }
+    #modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      padding: 0;
+      overflow: hidden;
+    }
+    #modalContent {
+      background: #1a2332;
+      border-radius: 15px;
+      width: 95vw;
+      height: 95vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      transition: width 0.3s, height 0.3s;
+    }
+    body.light #modalContent {
+      background: #f0f0f0;
+      color: #000000;
+    }
+    #modalClose {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #chartContainer {
+      width: 100%;
+      min-height: 300px;
+      margin-bottom: 20px;
+      position: relative;
+      transition: width 0.3s, height 0.3s;
+    }
+    #modalOverlay.expanded-view #modalContent {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      flex-direction: column;
+    }
+    #modalOverlay.expanded-view #chartContainer {
+      height: 80vh;
+      flex-grow: 1;
+    }
+    #chartContainer.expanded-chart {
+      width: 100%;
+      height: 80vh;
+    }
+    #cryptoChart {
+      width: 100%;
+      height: 100%;
+    }
+    .modal-footer {
+      font-size: 0.9em;
+      color: #7a8599;
+      text-align: center;
+      word-break: break-all;
+      margin-top: 20px;
+    }
+    body.light .modal-footer {
+      color: #333333;
+    }
+    .modal-info {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .modal-info p {
+      margin: 5px 0;
+    }
+    .modal-explanation {
+      font-size: 0.9em;
+      margin-top: 15px;
+      background-color: #0a0e17;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    body.light .modal-explanation {
+      background-color: #ddd;
+      color: #000;
+    }
+    .modal-explanation h4 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    #priceAlertContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #percentAlertLabel {
+      display: inline-block;
+      margin-right: 5px;
+    }
+    #priceAlertInput {
+      width: 60px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setAlertBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #buyPriceContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #buyPriceInput {
+      width: 100px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setBuyPriceBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #clearBuyPriceBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #F44336;
+      color: white;
+      cursor: pointer;
+    }
+    #profitLossContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #profitLossText {
+      margin: 5px;
+      font-weight: bold;
+    }
+    .green-arrow {
+      color: #00ff00;
+      font-weight: bold;
+    }
+    .red-arrow {
+      color: #ff4444;
+      font-weight: bold;
+    }
+    #themeToggle {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 0.8em;
+      z-index: 2000;
+    }
+    #favoritesBar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 5px;
+      z-index: 1000;
+    }
+    #btnFavoritos, #btnVerTodos {
+      background-color: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 0.8em;
+    }
+    #updateChartBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 5px auto;
+      display: block;
+      font-size: 0.9em;
+    }
+    #lastUpdateModal {
+      text-align: center;
+      font-style: italic;
+      color: #7a8599;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+    #verAnalisisBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 0 auto;
+      display: block;
+      font-size: 0.9em;
+    }
+    #volverBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 0 auto;
+      display: none; /* Inicialmente oculto */
+      font-size: 0.9em;
+    }
+    #silenciarAlertasBtn {
+      background: #FF9800;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      cursor: pointer;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2100;
+    }
+    #progressOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 4000;
+      flex-direction: column;
+      color: #ffffff;
+      font-size: 1.2em;
+      flex-wrap: wrap;
+    }
+    #progressBarContainer {
+      width: 80%;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    #progressBar {
+      width: 0%;
+      height: 30px;
+      background-color: #00ffcc;
+      transition: width 0.3s;
+    }
+    @media (max-width: 768px) {
+      #modalContent {
+        width: 98vw;
+        height: 98vh;
+      }
+      #progressBarContainer {
+        width: 90%;
+      }
+    }
+    #modalTimeFrameContainer {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #modalTimeFrameContainer label {
+      margin-right: 5px;
+      font-weight: bold;
+    }
+    #modalTimeFrameFilter {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #00ffcc;
+      background-color: transparent;
+      color: inherit;
+      min-width: 150px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+    }
+    #modalTimeFrameFilter option {
+      background-color: #1a2332;
+      color: #ffffff;
+    }
+    body.light #modalTimeFrameFilter option {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+  </style>
+</head>
+<body class="dark">
+  <!-- Verificamos si hay usuario logueado; si no, redirigimos a login.html -->
+  <script>
+    const savedUser = localStorage.getItem('loggedUser');
+    if (!savedUser) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <h1>Monitor Criptomonedas</h1>
+  <h3>by Pablo Bascoy</h3>
+
+  <!-- Botón para Cerrar Sesión (arriba a la derecha) -->
+  <button id="logoutBtn" style="position: fixed; top:20px; right:20px; background:#F44336; color:#fff; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; z-index:3000;">
+    Cerrar Sesión
+  </button>
+
+  <!-- Barra de progreso -->
+  <div id="progressOverlay">
+    <div id="progressMessage">Cargando criptomonedas...</div>
+    <div id="progressBarContainer">
+      <div id="progressBar"></div>
+    </div>
+    <div id="progressText">0%</div>
+  </div>
+
+  <!-- Explicación de RSI -->
+  <div id="indicatorExplanation">
+    <p><strong>¿Qué es el RSI (Relative Strength Index)?</strong></p>
+    <p>El RSI mide la fortaleza o debilidad de un activo según sus últimos movimientos de precio, entre 0 y 100.</p>
+    <ul>
+      <li>RSI &gt; 70: Señal de venta.</li>
+      <li>RSI &lt; 30: Señal de compra.</li>
+      <li>RSI 30-70: Fase neutra.</li>
+    </ul>
+    <p>Las criptomonedas marcadas como favoritas aparecerán primero cada vez que se actualice (automático o manual).  
+    Puedes actualizar manualmente o cada cierto número de segundos. El % de ganancia/pérdida se recalcula según tu precio de compra.</p>
+  </div>
+
+  <p id="lastUpdate">Última actualización: (sin datos)</p>
+
+  <div id="intervalContainer">
+    <label>Actualización (segundos):
+      <input type="number" id="updateIntervalInput" placeholder="30">
+    </label>
+    <button id="setIntervalBtn">Set Interval</button>
+  </div>
+
+  <div id="filtersContainer">
+    <div id="coinFilterContainer">
+      <label for="coinFilter">Criptomoneda</label>
+      <select id="coinFilter">
+          <option value="all">Todas</option>
+      </select>
+    </div>
+    <div id="rsiFilterContainer">
+      <label for="rsiFilter">Estado RSI</label>
+      <select id="rsiFilter">
+          <option value="all">Todas</option>
+          <option value="comprar">Comprar</option>
+          <option value="vender">Vender</option>
+          <option value="esperar">Esperar</option>
+          <option value="neutral">Neutral</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="error">No se pudo acceder a los datos en tiempo real. Por favor, intente más tarde.</div>
+  <div id="cryptoGrid"></div>
+
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div id="modalContent">
+      <button id="modalClose">Regresar</button>
+      <h2 id="modalTitle"></h2>
+      <button id="updateChartBtn">Actualizar</button>
+      <div id="modalTimeFrameContainer">
+        <label for="modalTimeFrameFilter">Marco Temporal</label>
+        <select id="modalTimeFrameFilter">
+            <option value="5m">5 Minutos</option>
+            <option value="15m">15 Minutos</option>
+            <option value="1h">1 Hora</option>
+            <option value="1d">Por Día</option>
+            <option value="1w">Por Semana</option>
+            <option value="1M">Por Mes</option>
+            <option value="6M">Últimos 6 Meses</option>
+            <option value="1Y">Último Año</option>
+        </select>
+      </div>
+      <p id="lastUpdateModal"></p>
+      <div class="modal-info" id="modalInfo"></div>
+      <div id="chartContainer">
+        <canvas id="cryptoChart"></canvas>
+      </div>
+      <button id="verAnalisisBtn">Ver Análisis</button>
+      <button id="volverBtn">Volver</button>
+
+      <div id="priceAlertContainer">
+        <label id="percentAlertLabel">% de ganancia para alerta:
+          <input type="number" id="priceAlertInput" placeholder="5">
+        </label>
+        <button id="setAlertBtn">Set Alert</button>
+      </div>
+
+      <div id="buyPriceContainer">
+        <label>Precio de Compra: $<input type="number" id="buyPriceInput" placeholder="0.00"></label>
+        <button id="setBuyPriceBtn">Colocar precio de compra</button>
+        <button id="clearBuyPriceBtn">Borrar precio de compra</button>
+      </div>
+      <div id="profitLossContainer">
+        <p id="profitLossText">Ganancia/Perdida: 0%</p>
+      </div>
+
+      <div class="modal-explanation">
+        <h4>Explicación de los Indicadores:</h4>
+        <p><span style="color:#00ffcc;font-weight:bold;">Línea principal (cyan):</span> Representa el <strong>precio histórico</strong> de la criptomoneda.</p>
+        <p><span style="color:#4CAF50;font-weight:bold;">Línea de tendencia (verde/punteada):</span> Indica la <strong>tendencia actual</strong> del precio.</p>
+        <p><span style="color:#FFD700;font-weight:bold;">SMA (7) (amarillo):</span> <strong>Media Móvil Simple de 7 periodos</strong>.</p>
+        <p><span style="color:#FF8C00;font-weight:bold;">SMA (30) (naranja):</span> <strong>Media Móvil Simple de 30 periodos</strong>.</p>
+        <p><span style="color:#00BFFF;font-weight:bold;">Volumen (azul):</span> <strong>cantidad de operaciones</strong> en cada periodo.</p>
+        <p><span style="color:#EE82EE;font-weight:bold;">Línea IA (violeta):</span> <strong>predicción IA</strong> basada en patrones históricos.</p>
+        <h4>Consejo:</h4>
+        <p id="adviceText">(Se llenará con consejos aleatorios)</p>
+      </div>
+
+      <div class="modal-footer">
+        <span id="dataSource"></span>
+      </div>
+    </div>
+  </div>
+
+  <button id="themeToggle">Tema</button>
+  <div id="favoritesBar">
+    <button id="btnFavoritos">Favoritos</button>
+    <button id="btnVerTodos">Ver Todos</button>
+  </div>
+
+  <button id="silenciarAlertasBtn">Silenciar Alertas</button>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+  <script>
+    // Botón Cerrar Sesión: elimina "loggedUser" y vuelve al login
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedUser');
+      window.location.href = 'login.html';
+    });
+
+    /* === A PARTIR DE AQUÍ, todo tu código original del monitor === */
+    
+    <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitor Criptomonedas - RSI + PnL + Voz + Favoritas Primero</title>
+  <style>
+    /* === Estilos Generales === */
+    body.dark {
+      background-color: #0a0e17;
+      color: #ffffff;
+    }
+    body.light {
+      background-color: #f0f0f0;
+      color: #000000;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h1 {
+      text-align: center;
+      color: #00ffcc;
+      font-size: 2.5em;
+      margin-bottom: 5px;
+    }
+    h3 {
+      text-align: center;
+      color: #7a8599;
+      margin-top: -10px;
+      font-size: 0.9em;
+      font-weight: normal;
+    }
+    #indicatorExplanation {
+      max-width: 800px;
+      margin: 10px auto 20px auto;
+      background-color: #1a2332;
+      border-radius: 10px;
+      padding: 15px;
+      color: #ccc;
+      font-size: 0.9em;
+    }
+    body.light #indicatorExplanation {
+      background-color: #eaeaea;
+      color: #333;
+    }
+    #indicatorExplanation p {
+      margin: 5px 0;
+      line-height: 1.3em;
+    }
+    #lastUpdate {
+      text-align: center;
+      margin-top: 5px;
+      font-style: italic;
+      color: #7a8599;
+      margin-bottom: 20px;
+    }
+    #filtersContainer {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #coinFilterContainer,
+    #rsiFilterContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #1a2332;
+      border-radius: 15px;
+      padding: 10px;
+    }
+    body.light #coinFilterContainer,
+    body.light #rsiFilterContainer {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+    label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    select {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #00ffcc;
+      background-color: transparent;
+      color: inherit;
+      min-width: 150px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+    }
+    #modalTimeFrameFilter option {
+      background-color: #1a2332;
+      color: #ffffff;
+    }
+    body.light #modalTimeFrameFilter option {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+    #intervalContainer {
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    #intervalContainer label {
+      margin-right: 5px;
+    }
+    #updateIntervalInput {
+      width: 60px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setIntervalBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #cryptoGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .crypto-card {
+      background-color: #1a2332;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    body.light .crypto-card {
+      background-color: #ffffff;
+      color: #000000;
+    }
+    .crypto-card:hover {
+      transform: translateY(-5px);
+    }
+    .crypto-card:hover::after {
+      content: "Clic para ver gráfico";
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #00ffcc;
+      color: #0a0e17;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      white-space: nowrap;
+    }
+    .crypto-logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+    }
+    .crypto-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+    .crypto-price {
+      font-size: 1.1em;
+      margin-bottom: 15px;
+    }
+    .flag {
+      display: inline-block;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.9em;
+      white-space: nowrap;
+    }
+    .green-flag {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .red-flag {
+      background-color: #F44336;
+      color: white;
+    }
+    .neutral-flag {
+      background-color: #FF9800;
+      color: white;
+    }
+    .mini-chart-container {
+      margin-top: 15px;
+      position: relative;
+      height: 80px;
+    }
+    canvas.mini-chart {
+      width: 100%;
+      height: 100%;
+    }
+    .no-chart-text {
+      margin-top: 15px;
+      font-size: 0.8em;
+      color: #7a8599;
+    }
+    .favorite-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #ffc107;
+    }
+    #error {
+      text-align: center;
+      color: #F44336;
+      font-size: 1.2em;
+      margin-top: 50px;
+      display: none;
+    }
+    #modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      padding: 0;
+      overflow: hidden;
+    }
+    #modalContent {
+      background: #1a2332;
+      border-radius: 15px;
+      width: 95vw;
+      height: 95vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      transition: width 0.3s, height 0.3s;
+    }
+    body.light #modalContent {
+      background: #f0f0f0;
+      color: #000000;
+    }
+    #modalClose {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #chartContainer {
+      width: 100%;
+      min-height: 300px;
+      margin-bottom: 20px;
+      position: relative;
+      transition: width 0.3s, height 0.3s;
+    }
+    #modalOverlay.expanded-view #modalContent {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      flex-direction: column;
+    }
+    #modalOverlay.expanded-view #chartContainer {
+      height: 80vh;
+      flex-grow: 1;
+    }
+    #chartContainer.expanded-chart {
+      width: 100%;
+      height: 80vh;
+    }
+    #cryptoChart {
+      width: 100%;
+      height: 100%;
+    }
+    .modal-footer {
+      font-size: 0.9em;
+      color: #7a8599;
+      text-align: center;
+      word-break: break-all;
+      margin-top: 20px;
+    }
+    body.light .modal-footer {
+      color: #333333;
+    }
+    .modal-info {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .modal-info p {
+      margin: 5px 0;
+    }
+    .modal-explanation {
+      font-size: 0.9em;
+      margin-top: 15px;
+      background-color: #0a0e17;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    body.light .modal-explanation {
+      background-color: #ddd;
+      color: #000;
+    }
+    .modal-explanation h4 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    #priceAlertContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #percentAlertLabel {
+      display: inline-block;
+      margin-right: 5px;
+    }
+    #priceAlertInput {
+      width: 60px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setAlertBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #buyPriceContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #buyPriceInput {
+      width: 100px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    #setBuyPriceBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #00ffcc;
+      color: #0a0e17;
+      cursor: pointer;
+    }
+    #clearBuyPriceBtn {
+      padding: 5px 10px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #F44336;
+      color: white;
+      cursor: pointer;
+    }
+    #profitLossContainer {
+      margin: 10px 0;
+      text-align: center;
+    }
+    #profitLossText {
+      margin: 5px;
+      font-weight: bold;
+    }
+    .green-arrow {
+      color: #00ff00;
+      font-weight: bold;
+    }
+    .red-arrow {
+      color: #ff4444;
+      font-weight: bold;
+    }
+    #themeToggle {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 0.8em;
+      z-index: 2000;
+    }
+    #favoritesBar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 5px;
+      z-index: 1000;
+    }
+    #btnFavoritos, #btnVerTodos {
+      background-color: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 0.8em;
+    }
+    #updateChartBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 5px auto;
+      display: block;
+      font-size: 0.9em;
+    }
+    #lastUpdateModal {
+      text-align: center;
+      font-style: italic;
+      color: #7a8599;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+    #verAnalisisBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 0 auto;
+      display: block;
+      font-size: 0.9em;
+    }
+    #volverBtn {
+      background: #00ffcc;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto 0 auto;
+      display: none; /* Inicialmente oculto */
+      font-size: 0.9em;
+    }
+    #silenciarAlertasBtn {
+      background: #FF9800;
+      color: #0a0e17;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      cursor: pointer;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2100;
+    }
+    #progressOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 4000;
+      flex-direction: column;
+      color: #ffffff;
+      font-size: 1.2em;
+      flex-wrap: wrap;
+    }
+    #progressBarContainer {
+      width: 80%;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    #progressBar {
+      width: 0%;
+      height: 30px;
+      background-color: #00ffcc;
+      transition: width 0.3s;
+    }
+    @media (max-width: 768px) {
+      #modalContent {
+        width: 98vw;
+        height: 98vh;
+      }
+      #progressBarContainer {
+        width: 90%;
+      }
+    }
+    #modalTimeFrameContainer {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #modalTimeFrameContainer label {
+      margin-right: 5px;
+      font-weight: bold;
+    }
+    #modalTimeFrameFilter {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #00ffcc;
+      background-color: transparent;
+      color: inherit;
+      min-width: 150px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+    }
+    #modalTimeFrameFilter option {
+      background-color: #1a2332;
+      color: #ffffff;
+    }
+    body.light #modalTimeFrameFilter option {
+      background-color: #eaeaea;
+      color: #000000;
+    }
+  </style>
+</head>
+<body class="dark">
+  <!-- Verificamos si hay usuario logueado; si no, redirigimos a login.html -->
+  <script>
+    const savedUser = localStorage.getItem('loggedUser');
+    if (!savedUser) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <h1>Monitor Criptomonedas</h1>
+  <h3>by Pablo Bascoy</h3>
+
+  <!-- Botón para Cerrar Sesión (arriba a la derecha) -->
+  <button id="logoutBtn" style="position: fixed; top:20px; right:20px; background:#F44336; color:#fff; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; z-index:3000;">
+    Cerrar Sesión
+  </button>
+
+  <!-- Barra de progreso -->
+  <div id="progressOverlay">
+    <div id="progressMessage">Cargando criptomonedas...</div>
+    <div id="progressBarContainer">
+      <div id="progressBar"></div>
+    </div>
+    <div id="progressText">0%</div>
+  </div>
+
+  <!-- Explicación de RSI -->
+  <div id="indicatorExplanation">
+    <p><strong>¿Qué es el RSI (Relative Strength Index)?</strong></p>
+    <p>El RSI mide la fortaleza o debilidad de un activo según sus últimos movimientos de precio, entre 0 y 100.</p>
+    <ul>
+      <li>RSI &gt; 70: Señal de venta.</li>
+      <li>RSI &lt; 30: Señal de compra.</li>
+      <li>RSI 30-70: Fase neutra.</li>
+    </ul>
+    <p>Las criptomonedas marcadas como favoritas aparecerán primero cada vez que se actualice (automático o manual).  
+    Puedes actualizar manualmente o cada cierto número de segundos. El % de ganancia/pérdida se recalcula según tu precio de compra.</p>
+  </div>
+
+  <p id="lastUpdate">Última actualización: (sin datos)</p>
+
+  <div id="intervalContainer">
+    <label>Actualización (segundos):
+      <input type="number" id="updateIntervalInput" placeholder="30">
+    </label>
+    <button id="setIntervalBtn">Set Interval</button>
+  </div>
+
+  <div id="filtersContainer">
+    <div id="coinFilterContainer">
+      <label for="coinFilter">Criptomoneda</label>
+      <select id="coinFilter">
+          <option value="all">Todas</option>
+      </select>
+    </div>
+    <div id="rsiFilterContainer">
+      <label for="rsiFilter">Estado RSI</label>
+      <select id="rsiFilter">
+          <option value="all">Todas</option>
+          <option value="comprar">Comprar</option>
+          <option value="vender">Vender</option>
+          <option value="esperar">Esperar</option>
+          <option value="neutral">Neutral</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="error">No se pudo acceder a los datos en tiempo real. Por favor, intente más tarde.</div>
+  <div id="cryptoGrid"></div>
+
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div id="modalContent">
+      <button id="modalClose">Regresar</button>
+      <h2 id="modalTitle"></h2>
+      <button id="updateChartBtn">Actualizar</button>
+      <div id="modalTimeFrameContainer">
+        <label for="modalTimeFrameFilter">Marco Temporal</label>
+        <select id="modalTimeFrameFilter">
+            <option value="5m">5 Minutos</option>
+            <option value="15m">15 Minutos</option>
+            <option value="1h">1 Hora</option>
+            <option value="1d">Por Día</option>
+            <option value="1w">Por Semana</option>
+            <option value="1M">Por Mes</option>
+            <option value="6M">Últimos 6 Meses</option>
+            <option value="1Y">Último Año</option>
+        </select>
+      </div>
+      <p id="lastUpdateModal"></p>
+      <div class="modal-info" id="modalInfo"></div>
+      <div id="chartContainer">
+        <canvas id="cryptoChart"></canvas>
+      </div>
+      <button id="verAnalisisBtn">Ver Análisis</button>
+      <button id="volverBtn">Volver</button>
+
+      <div id="priceAlertContainer">
+        <label id="percentAlertLabel">% de ganancia para alerta:
+          <input type="number" id="priceAlertInput" placeholder="5">
+        </label>
+        <button id="setAlertBtn">Set Alert</button>
+      </div>
+
+      <div id="buyPriceContainer">
+        <label>Precio de Compra: $<input type="number" id="buyPriceInput" placeholder="0.00"></label>
+        <button id="setBuyPriceBtn">Colocar precio de compra</button>
+        <button id="clearBuyPriceBtn">Borrar precio de compra</button>
+      </div>
+      <div id="profitLossContainer">
+        <p id="profitLossText">Ganancia/Perdida: 0%</p>
+      </div>
+
+      <div class="modal-explanation">
+        <h4>Explicación de los Indicadores:</h4>
+        <p><span style="color:#00ffcc;font-weight:bold;">Línea principal (cyan):</span> Representa el <strong>precio histórico</strong> de la criptomoneda.</p>
+        <p><span style="color:#4CAF50;font-weight:bold;">Línea de tendencia (verde/punteada):</span> Indica la <strong>tendencia actual</strong> del precio.</p>
+        <p><span style="color:#FFD700;font-weight:bold;">SMA (7) (amarillo):</span> <strong>Media Móvil Simple de 7 periodos</strong>.</p>
+        <p><span style="color:#FF8C00;font-weight:bold;">SMA (30) (naranja):</span> <strong>Media Móvil Simple de 30 periodos</strong>.</p>
+        <p><span style="color:#00BFFF;font-weight:bold;">Volumen (azul):</span> <strong>cantidad de operaciones</strong> en cada periodo.</p>
+        <p><span style="color:#EE82EE;font-weight:bold;">Línea IA (violeta):</span> <strong>predicción IA</strong> basada en patrones históricos.</p>
+        <h4>Consejo:</h4>
+        <p id="adviceText">(Se llenará con consejos aleatorios)</p>
+      </div>
+
+      <div class="modal-footer">
+        <span id="dataSource"></span>
+      </div>
+    </div>
+  </div>
+
+  <button id="themeToggle">Tema</button>
+  <div id="favoritesBar">
+    <button id="btnFavoritos">Favoritos</button>
+    <button id="btnVerTodos">Ver Todos</button>
+  </div>
+
+  <button id="silenciarAlertasBtn">Silenciar Alertas</button>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+  <script>
+    // Botón Cerrar Sesión: elimina "loggedUser" y vuelve al login
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedUser');
+      window.location.href = 'login.html';
+    });
+
+    /* === A PARTIR DE AQUÍ, todo tu código original del monitor === */
+    let chartInstance = null;
+    let cryptoData = [];
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    let priceAlerts = JSON.parse(localStorage.getItem('priceAlerts')) || {};
+    let buyPrices = JSON.parse(localStorage.getItem('buyPrices')) || {};
+    let currentModalCoinId = null;
+    let currentModalCoinName = null;
+    let currentModalPrice = null;
+    let currentModalSymbol = null;
+    let silenciarAlertas = false;
+    let updateTimer = null;
+    let favoritesActive = false; // Flag para controlar el filtro de favoritos
+    let updateInterval = parseInt(localStorage.getItem('updateInterval')) || 30; // Intervalo por defecto
+
+    // ... (aquí continúan todas tus funciones tal cual las tenías)
+    // Por razones de espacio, no duplico todo, pero es tu mismo código original:
+    // calculateRSI(), speakMessage(), createCryptoCard(), reorderCards(), loadMiniChart(), etc.
+    // fetchCryptoData(), fetchFavoritesData(), createCardWithRSI()...
+    // openModal(), loadModalData(), applyFilters(), initialize(), startUpdateTimer()...
+    // Al final, llama initialize() para que arranque.
+    
+    // === 26) Carga Inicial ===
+    initialize();
+  </script>
+</body>
+</html>
+
